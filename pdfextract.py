@@ -5,7 +5,7 @@ from docx.shared import Inches
 import google.generativeai as genai
 import os
 
-genai.configure(api_key="AIzaSyDXvVwgKl9rzxdb0ThuHfdizBg6qPHwhoY")
+genai.configure(api_key="API key")
 
 def gemini_ai(sometext, imgpath=None):
     m = genai.GenerativeModel("gemini-2.0-flash")
@@ -129,3 +129,4 @@ def makeReport(pdfname, outname="ai_report.docx"):
 
 if __name__ == "__main__":
     makeReport("input.pdf", "ai_output.docx")
+
