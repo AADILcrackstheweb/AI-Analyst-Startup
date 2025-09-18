@@ -1,0 +1,8 @@
+google-cloud-storage
+google-cloud-bigquery
+google-cloud-firestore
+google-generativeai
+PyMuPDF
+pdfplumber
+python-docx
+functions-framework
