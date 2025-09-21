@@ -1,9 +1,7 @@
-# src/data/models.py
-
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Union
 from enum import Enum
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic import HttpUrl, EmailStr
 
 class FundingStage(str, Enum):
@@ -73,13 +71,13 @@ class StartupProfile(BaseModel):
     tags: Optional[List[str]] = Field(None, max_items=20)
     notes: Optional[str] = Field(None, max_length=5000)
     
-    @validator('company_name')
+    @field_validator('company_name')
     def validate_company_name(cls, v):
         if not v.strip():
             raise ValueError('Company name cannot be empty')
         return v.strip()
     
-    @validator('product_description', 'target_market')
+    @field_validator('product_description', 'target_market')
     def validate_text_fields(cls, v):
         if not v.strip():
             raise ValueError('Field cannot be empty')
@@ -88,7 +86,6 @@ class StartupProfile(BaseModel):
     class Config:
         use_enum_values = True
         validate_assignment = True
-
 
 class MarketSizeData(BaseModel):
     """Market size analysis results"""
@@ -104,15 +101,15 @@ class MarketSizeData(BaseModel):
     # Methodology and confidence
     methodology: str
     data_sources: List[str] = Field(default_factory=list)
-    confidence: ConfidenceScore
     
-    @validator('tam', 'sam', 'som')
+    
+    @field_validator('tam', 'sam', 'som')
     def validate_market_sizes(cls, v):
         if v < 0:
             raise ValueError('Market size cannot be negative')
         return v
     
-    @root_validator
+    @model_validator(mode='after')
     def validate_market_hierarchy(cls, values):
         tam = values.get('tam', 0)
         sam = values.get('sam', 0)
@@ -125,28 +122,6 @@ class MarketSizeData(BaseModel):
         
         return values
 
-class SentimentData(BaseModel):
-    """Sentiment analysis results"""
-    overall_score: float = Field(..., ge=-1, le=1, description="Overall sentiment score")
-    sentiment_label: str = Field(..., description="Sentiment label: negative, neutral, positive")
-    
-    # Component sentiments
-    social_media_sentiment: Optional[float] = Field(None, ge=-1, le=1)
-    news_sentiment: Optional[float] = Field(None, ge=-1, le=1)
-    market_sentiment: Optional[float] = Field(None, ge=-1, le=1)
-    consumer_sentiment: Optional[float] = Field(None, ge=-1, le=1)
-    
-    # Detailed analysis
-    sentiment_sources: List[str] = Field(default_factory=list)
-    sentiment_trends: Optional[Dict[str, float]] = None
-    key_themes: List[str] = Field(default_factory=list)
-    confidence: ConfidenceScore
-    
-    @validator('sentiment_label')
-    def validate_sentiment_label(cls, v):
-        if v not in ['negative', 'neutral', 'positive']:
-            raise ValueError('Sentiment label must be negative, neutral, or positive')
-        return v
 
 class CompetitorProfile(BaseModel):
     """Individual competitor profile"""
@@ -190,64 +165,20 @@ class MarketAnalysis(BaseModel):
     # Analysis metadata
     data_sources: List[str] = Field(default_factory=list)
 
-
-class DueDiligenceResults(BaseModel):
-    """Complete due diligence analysis results"""
-    # Input data
-    startup_profile: StartupProfile
-    documents_analyzed: List[Document]
-    
-    # Analysis results
-    market_analysis: MarketAnalysis
-    sentiment_analysis: SentimentData
-    competitive_analysis: CompetitiveAnalysis
-    
-    # Final assessment
-    due_diligence_score: float = Field(..., ge=0, le=100, description="Overall DD score out of 100")
-    investment_recommendation: str = Field(..., description="Investment recommendation")
-    
-    # Insights and recommendations
-    key_insights: List[str] = Field(default_factory=list)
-    recommendations: List[Recommendation] = Field(default_factory=list)
-    risk_factors: List[RiskFactor] = Field(default_factory=list)
-    
-    # Analysis metadata
-    analysis_date: datetime = Field(default_factory=datetime.now)
-    analysis_duration: float = Field(..., ge=0, description="Analysis duration in seconds")
-    overall_confidence: ConfidenceScore
-    
-    class Config:
-        use_enum_values = True
-        validate_assignment = True
-
-
-
-
-from pydantic import BaseModel
-from typing import List, Dict
-
 class CustomerSegments(BaseModel):
     primary: List[str]
     secondary: List[str]
     details: str
 
-class MarketSize(BaseModel):
-    TAM: str
-    SAM: str
-    SOM: str
-    assumptions: str
 
-class CompetitiveLandscape(BaseModel):
-    major_competitors: List[str]
-    substitutes_or_alternatives: List[str]
-    barriers_to_entry: List[str]
+class DueDiligenceResults(BaseModel):
+    """Complete due diligence analysis results"""
+    # Input data
+    startup_profile: StartupProfile
+    
+    # Analysis results
+    market_analysis: MarketAnalysis
+    customer_analysis: CustomerSegments
+    competitive_analysis: CompetitiveAnalysis
 
-class MarketAnalysis(BaseModel):
-    customer_segments: CustomerSegments
-    market_size: MarketSize
-    market_trends: List[str]
-    opportunities_and_gaps: List[str]
-    competitive_landscape: CompetitiveLandscape
-    customer_pain_points: List[str]
-    monetization_and_business_models: List[str]
-    risks_and_challenges: List[str]
+
