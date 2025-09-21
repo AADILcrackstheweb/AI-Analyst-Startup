@@ -124,71 +124,6 @@ class StartupProfile(BaseModel):
         use_enum_values = True
         validate_assignment = True
 
-class DocumentType(str, Enum):
-    PITCH_DECK = "pitch_deck"
-    TRANSCRIPT = "transcript"
-    MEETING_NOTES = "meeting_notes"
-    FINANCIAL_STATEMENT = "financial_statement"
-    BUSINESS_PLAN = "business_plan"
-    MARKET_RESEARCH = "market_research"
-    LEGAL_DOCUMENT = "legal_document"
-    OTHER = "other"
-
-class DocumentSource(str, Enum):
-    UPLOAD = "upload"
-    URL = "url"
-    GCS = "gcs"
-    EMAIL = "email"
-
-class Document(BaseModel):
-    """Document model for processing"""
-    id: Optional[str] = Field(None, description="Unique document identifier")
-    name: str = Field(..., min_length=1, max_length=255)
-    type: DocumentType
-    source: DocumentSource
-    
-    # Source-specific fields
-    file_path: Optional[str] = None
-    url: Optional[HttpUrl] = None
-    gcs_path: Optional[str] = None
-    
-    # Metadata
-    file_size: Optional[int] = Field(None, ge=0, description="File size in bytes")
-    mime_type: Optional[str] = None
-    upload_date: datetime = Field(default_factory=datetime.now)
-    
-    # Processing status
-    processed: bool = False
-    processing_error: Optional[str] = None
-    
-    @root_validator
-    def validate_source_fields(cls, values):
-        source = values.get('source')
-        file_path = values.get('file_path')
-        url = values.get('url')
-        gcs_path = values.get('gcs_path')
-        
-        if source == DocumentSource.UPLOAD and not file_path:
-            raise ValueError('file_path required for upload source')
-        elif source == DocumentSource.URL and not url:
-            raise ValueError('url required for url source')
-        elif source == DocumentSource.GCS and not gcs_path:
-            raise ValueError('gcs_path required for gcs source')
-        
-        return values
-
-class ProcessedDocument(BaseModel):
-    """Processed document with extracted content"""
-    document: Document
-    extracted_text: str
-    structured_data: Dict[str, Any] = Field(default_factory=dict)
-    confidence: ConfidenceScore
-    processing_time: float = Field(..., ge=0, description="Processing time in seconds")
-    
-    # Extracted business information
-    business_information: Optional[Dict[str, Any]] = None
-    key_metrics: Optional[Dict[str, float]] = None
-    financial_data: Optional[Dict[str, Any]] = None
 
 class MarketSizeData(BaseModel):
     """Market size analysis results"""
@@ -306,34 +241,6 @@ class MarketAnalysis(BaseModel):
     data_sources: List[str] = Field(default_factory=list)
     confidence: ConfidenceScore
 
-class RiskFactor(BaseModel):
-    """Individual risk factor"""
-    category: str = Field(..., description="Risk category")
-    description: str = Field(..., min_length=10, max_length=500)
-    severity: str = Field(..., description="Risk severity: low, medium, high, critical")
-    probability: float = Field(..., ge=0, le=1, description="Probability of occurrence")
-    impact: str = Field(..., description="Potential impact description")
-    mitigation: Optional[str] = Field(None, description="Suggested mitigation strategy")
-    
-    @validator('severity')
-    def validate_severity(cls, v):
-        if v not in ['low', 'medium', 'high', 'critical']:
-            raise ValueError('Severity must be low, medium, high, or critical')
-        return v
-
-class Recommendation(BaseModel):
-    """Investment recommendation"""
-    type: str = Field(..., description="Recommendation type")
-    description: str = Field(..., min_length=10, max_length=1000)
-    priority: str = Field(..., description="Priority: low, medium, high")
-    rationale: str = Field(..., min_length=10, max_length=1000)
-    expected_impact: Optional[str] = None
-    
-    @validator('priority')
-    def validate_priority(cls, v):
-        if v not in ['low', 'medium', 'high']:
-            raise ValueError('Priority must be low, medium, or high')
-        return v
 
 class DueDiligenceResults(BaseModel):
     """Complete due diligence analysis results"""
@@ -363,3 +270,35 @@ class DueDiligenceResults(BaseModel):
     class Config:
         use_enum_values = True
         validate_assignment = True
+
+
+
+
+from pydantic import BaseModel
+from typing import List, Dict
+
+class CustomerSegments(BaseModel):
+    primary: List[str]
+    secondary: List[str]
+    details: str
+
+class MarketSize(BaseModel):
+    TAM: str
+    SAM: str
+    SOM: str
+    assumptions: str
+
+class CompetitiveLandscape(BaseModel):
+    major_competitors: List[str]
+    substitutes_or_alternatives: List[str]
+    barriers_to_entry: List[str]
+
+class MarketAnalysis(BaseModel):
+    customer_segments: CustomerSegments
+    market_size: MarketSize
+    market_trends: List[str]
+    opportunities_and_gaps: List[str]
+    competitive_landscape: CompetitiveLandscape
+    customer_pain_points: List[str]
+    monetization_and_business_models: List[str]
+    risks_and_challenges: List[str]

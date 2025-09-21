@@ -10,7 +10,7 @@ from textblob import TextBlob
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from google.cloud import language_v1
 
-from .base_tool import BaseDueDiligenceTool
+
 from src.data.models import SentimentData, ConfidenceScore, SentimentScore
 
 class SentimentAnalysisInput(BaseModel):
