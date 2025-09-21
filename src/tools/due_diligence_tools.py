@@ -32,7 +32,7 @@ customer_chain = customer_prompt | llm | customer_parser
 
 def customer_segments_tool(startup_idea: str):
     try:
-        result = customer_chain.invoke(startup_idea=startup_idea)
+        result = customer_chain.invoke({"startup_idea": startup_idea})
         return result 
     except:
         raise ValueError("Error analyzing customer segments")
@@ -56,7 +56,7 @@ market_size_chain = market_size_prompt | llm | market_size_parser
 
 def market_size_tool(startup_idea: str):
     try:
-        result = market_size_chain.invoke(startup_idea=startup_idea)
+        result = market_size_chain.invoke({"startup_idea": startup_idea})
         return result 
     except:
         raise ValueError("Error analyzing market size")
@@ -80,7 +80,7 @@ landscape_chain = landscape_prompt | llm | landscape_parser
 
 def competitive_landscape_tool(startup_idea: str):
     try:
-        result = landscape_chain.invoke(startup_idea=startup_idea)
+        result = landscape_chain.invoke({"startup_idea": startup_idea})
         return result
     except:
         raise ValueError("Error analyzing competitive landscape")

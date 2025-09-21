@@ -110,17 +110,17 @@ class MarketSizeData(BaseModel):
         return v
     
     @model_validator(mode='after')
-    def validate_market_hierarchy(cls, values):
-        tam = values.get('tam', 0)
-        sam = values.get('sam', 0)
-        som = values.get('som', 0)
+    def validate_market_hierarchy(cls, self):
+        tam = self.tam
+        sam = self.sam
+        som = self.som
         
         if sam > tam:
             raise ValueError('SAM cannot be larger than TAM')
         if som > sam:
             raise ValueError('SOM cannot be larger than SAM')
         
-        return values
+        return self
 
 
 class CompetitorProfile(BaseModel):
@@ -147,10 +147,21 @@ class CompetitorProfile(BaseModel):
     # Analysis metadata
     data_sources: List[str] = Field(default_factory=list)
 
+    @field_validator('stage', mode='before')
+    @classmethod
+    def validate_stage(cls, value: str) -> str:
+        """
+        Validates the funding stage. If the value is not a valid FundingStage enum member,
+        it defaults to 'other'.
+        """
+        if value not in {item.value for item in FundingStage}:
+            return FundingStage.OTHER.value
+        return value
+
 class CompetitiveAnalysis(BaseModel):
     """Competitive landscape analysis"""
     competitors: List[CompetitorProfile] = Field(default_factory=list)
-    market_position: str = Field(..., description="Startup's position in market")
+    market_position: Optional[str] = Field(None, description="Startup's position in market")
     competitive_advantages: List[str] = Field(default_factory=list)
     competitive_threats: List[str] = Field(default_factory=list)
 

@@ -11,10 +11,21 @@ Customer Pain Points: Clarify the specific problems or inefficiencies the target
 Monetization & Business Models: Suggest viable pricing and revenue models suited to the market.
 Risks & Challenges: Outline possible adoption barriers, market risks, or execution challenges.
 
-IMPORTANT:
-If you decide to use tools, make tool_calls only and do not generate text in the content field.
-If you decide to answer directly (without tool calls), respond in a clear, well-structured plain text format.
-Use bullet points and subheadings for clarity.
-Keep the response concise, realistic, and directly actionable.
+You have access to the following tools:
+{tools}
 
-{format_instructions}
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+
+Question: {startup_idea}
+Thought:{agent_scratchpad}
