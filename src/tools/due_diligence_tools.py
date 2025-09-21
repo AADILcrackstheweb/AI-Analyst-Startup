@@ -1,13 +1,17 @@
-from langchain.chat_models import ChatOpenAI
+from langchain_google_vertexai import VertexAI
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
-from langchain.chains import LLMChain
-from langchain.agents import Tool, initialize_agent
+from langchain.tools import Tool
+from data.models import CustomerSegments, MarketAnalysis, CompetitiveAnalysis
 
-# Schemas
-from data.models import CustomerSegments, MarketSize, CompetitiveLandscape, MarketAnalysis
-
-llm = ChatOpenAI(model="gpt-4o", temperature=0)
+default_params = {
+    "max_output_tokens": 1024,
+    "temperature": 0,
+    "top_p": 0.2,
+    "top_k": 1,
+    "model_name": "gemini-2.0-flash"
+}
+llm = VertexAI(**default_params)
 
 # Customer Segments Chain
 customer_parser = PydanticOutputParser(pydantic_object=CustomerSegments)
@@ -24,14 +28,17 @@ customer_prompt = PromptTemplate(
     partial_variables={"format_instructions": customer_parser.get_format_instructions()}
 )
 
-customer_chain = customer_prompt | llm | customer_parser #LLMChain(llm=llm, prompt=customer_prompt)
+customer_chain = customer_prompt | llm | customer_parser 
 
-def customer_segments_tool(startup_idea: str) -> dict:
-    result = customer_chain.invoke(startup_idea=startup_idea)
-    return result #customer_parser.parse(result).dict()
+def customer_segments_tool(startup_idea: str):
+    try:
+        result = customer_chain.invoke(startup_idea=startup_idea)
+        return result 
+    except:
+        raise ValueError("Error analyzing customer segments")
 
-# 2️⃣ Market Size Chain
-market_size_parser = PydanticOutputParser(pydantic_object=MarketSize)
+# Market Size Chain
+market_size_parser = PydanticOutputParser(pydantic_object=MarketAnalysis)
 
 market_size_prompt = PromptTemplate(
     template="""
@@ -45,14 +52,17 @@ market_size_prompt = PromptTemplate(
     partial_variables={"format_instructions": market_size_parser.get_format_instructions()}
 )
 
-market_size_chain = LLMChain(llm=llm, prompt=market_size_prompt)
+market_size_chain = market_size_prompt | llm | market_size_parser
 
-def market_size_tool(startup_idea: str) -> dict:
-    result = market_size_chain.run(startup_idea=startup_idea)
-    return market_size_parser.parse(result).dict()
+def market_size_tool(startup_idea: str):
+    try:
+        result = market_size_chain.invoke(startup_idea=startup_idea)
+        return result 
+    except:
+        raise ValueError("Error analyzing market size")
 
-# 3️⃣ Competitive Landscape Chain
-landscape_parser = PydanticOutputParser(pydantic_object=CompetitiveLandscape)
+# Competitive Landscape Chain
+landscape_parser = PydanticOutputParser(pydantic_object=CompetitiveAnalysis)
 
 landscape_prompt = PromptTemplate(
     template="""
@@ -66,23 +76,20 @@ landscape_prompt = PromptTemplate(
     partial_variables={"format_instructions": landscape_parser.get_format_instructions()}
 )
 
-landscape_chain = LLMChain(llm=llm, prompt=landscape_prompt)
+landscape_chain = landscape_prompt | llm | landscape_parser
 
-def competitive_landscape_tool(startup_idea: str) -> dict:
-    result = landscape_chain.run(startup_idea=startup_idea)
-    return landscape_parser.parse(result).dict()
+def competitive_landscape_tool(startup_idea: str):
+    try:
+        result = landscape_chain.invoke(startup_idea=startup_idea)
+        return result
+    except:
+        raise ValueError("Error analyzing competitive landscape")
 
-# 4️⃣ Wrap into Tools
+
 tools = [
-    Tool(name="Customer Segments", func=customer_segments_tool, description="Finds customer segments"),
+    Tool(name="Customer Segments", func=customer_segments_tool, description="Analyzes a startup idea and identifies potential customer segments, including primary, secondary and detailed characteristics."),
     Tool(name="Market Size", func=market_size_tool, description="Estimates TAM/SAM/SOM"),
     Tool(name="Competitive Landscape", func=competitive_landscape_tool, description="Maps competitors")
 ]
 
-# 5️⃣ Central Agent
-agent = initialize_agent(tools, llm, agent="zero-shot-react-description", verbose=True)
 
-startup_idea = "AI-powered fitness coaching app"
-response = agent.run(f"Run full market analysis for: {startup_idea}")
-
-print(response)

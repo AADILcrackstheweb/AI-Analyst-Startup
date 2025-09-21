@@ -4,43 +4,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any, Union
 from enum import Enum
 from pydantic import BaseModel, Field, validator, root_validator
-from pydantic.types import HttpUrl, EmailStr
-
-class BaseResponse(BaseModel):
-    """Base response model with common fields"""
-    timestamp: datetime = Field(default_factory=datetime.now)
-    success: bool = True
-    message: Optional[str] = None
-    
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
-
-class ConfidenceScore(BaseModel):
-    """Model for confidence scoring"""
-    score: float = Field(..., ge=0.0, le=1.0, description="Confidence score between 0 and 1")
-    level: str = Field(..., description="Confidence level: low, medium, high")
-    
-    @validator('level')
-    def validate_level(cls, v):
-        if v not in ['low', 'medium', 'high']:
-            raise ValueError('Level must be low, medium, or high')
-        return v
-    
-    @root_validator
-    def validate_score_level_consistency(cls, values):
-        score = values.get('score', 0)
-        level = values.get('level', '')
-        
-        if score < 0.3 and level != 'low':
-            raise ValueError('Score < 0.3 must have level "low"')
-        elif 0.3 <= score < 0.7 and level != 'medium':
-            raise ValueError('Score 0.3-0.7 must have level "medium"')
-        elif score >= 0.7 and level != 'high':
-            raise ValueError('Score >= 0.7 must have level "high"')
-        
-        return values
+from pydantic import HttpUrl, EmailStr
 
 class FundingStage(str, Enum):
     PRE_SEED = "pre_seed"
@@ -51,6 +15,7 @@ class FundingStage(str, Enum):
     SERIES_D_PLUS = "series_d_plus"
     IPO = "ipo"
     ACQUIRED = "acquired"
+    OTHER = "other"
 
 class Industry(str, Enum):
     SAAS = "saas"
@@ -206,7 +171,6 @@ class CompetitorProfile(BaseModel):
     
     # Analysis metadata
     data_sources: List[str] = Field(default_factory=list)
-    last_updated: datetime = Field(default_factory=datetime.now)
 
 class CompetitiveAnalysis(BaseModel):
     """Competitive landscape analysis"""
@@ -214,15 +178,6 @@ class CompetitiveAnalysis(BaseModel):
     market_position: str = Field(..., description="Startup's position in market")
     competitive_advantages: List[str] = Field(default_factory=list)
     competitive_threats: List[str] = Field(default_factory=list)
-    
-    # Scoring
-    competitive_strength_score: float = Field(..., ge=0, le=1)
-    market_differentiation_score: float = Field(..., ge=0, le=1)
-    
-    # Analysis details
-    total_competitors_analyzed: int = Field(..., ge=0)
-    analysis_methodology: str
-    confidence: ConfidenceScore
 
 class MarketAnalysis(BaseModel):
     """Complete market analysis results"""
@@ -232,14 +187,8 @@ class MarketAnalysis(BaseModel):
     market_opportunities: List[str] = Field(default_factory=list)
     market_threats: List[str] = Field(default_factory=list)
     
-    # Scoring
-    market_opportunity_score: float = Field(..., ge=0, le=1)
-    market_timing_score: float = Field(..., ge=0, le=1)
-    
     # Analysis metadata
-    analysis_date: datetime = Field(default_factory=datetime.now)
     data_sources: List[str] = Field(default_factory=list)
-    confidence: ConfidenceScore
 
 
 class DueDiligenceResults(BaseModel):

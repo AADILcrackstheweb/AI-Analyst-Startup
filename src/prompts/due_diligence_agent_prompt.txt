@@ -16,3 +16,5 @@ If you decide to use tools, make tool_calls only and do not generate text in the
 If you decide to answer directly (without tool calls), respond in a clear, well-structured plain text format.
 Use bullet points and subheadings for clarity.
 Keep the response concise, realistic, and directly actionable.
+
+{format_instructions}
