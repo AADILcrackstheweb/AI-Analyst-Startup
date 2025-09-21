@@ -26,6 +26,7 @@ class Industry(str, Enum):
     MARKETPLACE = "marketplace"
     CONSUMER = "consumer"
     ENTERPRISE = "enterprise"
+    ADTECH = "adtech"
     OTHER = "other"
 
 class BusinessModel(str, Enum):
@@ -137,7 +138,7 @@ class CompetitorProfile(BaseModel):
     
     # Competitive metrics
     market_share: Optional[float] = Field(None, ge=0, le=1)
-    competitive_strength: float = Field(..., ge=0, le=1)
+    competitive_strength: Optional[float] = Field(None, ge=0, le=1)
     
     # Features and positioning
     key_features: List[str] = Field(default_factory=list)
@@ -146,6 +147,21 @@ class CompetitorProfile(BaseModel):
     
     # Analysis metadata
     data_sources: List[str] = Field(default_factory=list)
+
+    @field_validator('website', mode='before')
+    @classmethod
+    def validate_website_url(cls, v: Any) -> Any:
+        """Prepend https:// if scheme is missing"""
+        if isinstance(v, str) and not v.startswith(('http://', 'https://')):
+            return f"https://{v}"
+        return v
+
+    @field_validator('industry', mode='before')
+    @classmethod
+    def validate_industry(cls, value: str) -> str:
+        if value not in {item.value for item in Industry}:
+            return Industry.OTHER.value
+        return value
 
     @field_validator('stage', mode='before')
     @classmethod

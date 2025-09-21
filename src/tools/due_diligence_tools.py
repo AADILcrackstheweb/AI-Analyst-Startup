@@ -2,14 +2,15 @@ from langchain_google_vertexai import VertexAI
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 from langchain.tools import Tool
-from data.models import CustomerSegments, MarketAnalysis, CompetitiveAnalysis
+from src.data.models import CustomerSegments, MarketAnalysis, CompetitiveAnalysis
 
 default_params = {
     "max_output_tokens": 1024,
     "temperature": 0,
     "top_p": 0.2,
     "top_k": 1,
-    "model_name": "gemini-2.0-flash"
+    "model_name": "gemini-2.0-flash",
+    "project": "aianalyst-472718"
 }
 llm = VertexAI(**default_params)
 
